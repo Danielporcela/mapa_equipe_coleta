@@ -1,0 +1,169 @@
+<!DOCTYPE html>
+<html lang="pt-br">
+<head>
+<meta charset="UTF-8">
+<title>Total Fora Operação</title>
+
+<link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+
+<style>
+body {
+    background:#f4f6f9;
+    font-family:Poppins, sans-serif;
+}
+
+.card {
+    border-radius:15px;
+    box-shadow:0 4px 20px rgba(0,0,0,0.08);
+}
+
+/* IMPRESSÃO LIMPA */
+@media print {
+
+    body {
+        background:#fff;
+        font-size:11px;
+    }
+
+    .no-print,
+    .btn {
+        display:none !important;
+    }
+
+    table {
+        width:100%;
+        border-collapse:collapse;
+    }
+
+    th, td {
+        border:1px solid #000;
+        padding:4px;
+        font-size:11px;
+    }
+
+    thead {
+        background:#000 !important;
+        color:#fff !important;
+    }
+
+    .card {
+        box-shadow:none;
+        border:none;
+    }
+
+    #cabecalho {
+        display:block !important;
+        text-align:center;
+        margin-bottom:10px;
+        font-weight:bold;
+    }
+}
+</style>
+
+</head>
+
+<body class="container mt-4">
+
+<!-- BOTÃO -->
+<div class="no-print mb-3">
+    <button onclick="window.print()" class="btn btn-success">🖨️ Imprimir</button>
+</div>
+
+<!-- CABEÇALHO -->
+<div id="cabecalho" style="display:none;">
+    RELATÓRIO DE RESERVA
+</div>
+
+<!-- 🔥 STATUS LISTA -->
+{% set status_lista = ['INSS','FERIAS','FALTA','PRESO','SUMIDO'] %}
+
+{% for status in status_lista %}
+
+<div class="card p-3 mb-3">
+
+<h5>{{ status }}</h5>
+
+<table class="table text-center">
+
+<tr>
+<th>Código</th>
+</tr>
+
+{% for d in dados %}
+
+    {% set codigo = d.Codigo if d.Codigo and d.Codigo != 'None' else '' %}
+    {% set tipo = d.Tipo if d.Tipo and d.Tipo != 'None' else '' %}
+
+    {% if codigo and tipo and tipo.upper() == status %}
+
+    <tr>
+        <td>{{ codigo }}</td>
+    </tr>
+
+    {% endif %}
+
+{% endfor %}
+
+</table>
+
+</div>
+
+{% endfor %}
+
+<!-- 🔥 IMPRESSÃO MOTORISTA / COLETOR -->
+<div class="d-none print-only">
+
+{% for status in status_lista %}
+
+<h5>{{ status }}</h5>
+
+<table>
+<thead>
+<tr>
+<th>Motoristas</th>
+<th>Coletores</th>
+</tr>
+</thead>
+
+<tbody>
+<tr>
+
+<td>
+{% for d in dados %}
+
+    {% set codigo = d.Codigo if d.Codigo and d.Codigo != 'None' else '' %}
+    {% set tipo = d.Tipo if d.Tipo and d.Tipo != 'None' else '' %}
+
+    {% if codigo and tipo and tipo.upper() == status and codigo.startswith('M') %}
+        {{ codigo }}<br>
+    {% endif %}
+
+{% endfor %}
+</td>
+
+<td>
+{% for d in dados %}
+
+    {% set codigo = d.Codigo if d.Codigo and d.Codigo != 'None' else '' %}
+    {% set tipo = d.Tipo if d.Tipo and d.Tipo != 'None' else '' %}
+
+    {% if codigo and tipo and tipo.upper() == status and codigo.startswith('C') %}
+        {{ codigo }}<br>
+    {% endif %}
+
+{% endfor %}
+</td>
+
+</tr>
+</tbody>
+
+</table>
+
+<br>
+
+{% endfor %}
+
+</div>
+
+</body>
+</html>

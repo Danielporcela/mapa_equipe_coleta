@@ -1,0 +1,31 @@
+<!DOCTYPE html>
+<html>
+<head>
+<meta charset="UTF-8">
+<title>Histórico</title>
+</head>
+<body>
+
+<h2>Histórico de Movimentação</h2>
+
+<table border="1">
+<tr>
+<th>Código</th>
+<th>Origem</th>
+<th>Destino</th>
+<th>Data</th>
+</tr>
+
+{% for h in dados %}
+<tr>
+<td>{{h.codigo}}</td>
+<td>{{h.origem}}</td>
+<td>{{h.destino}}</td>
+<td>{{h.data_hora}}</td>
+</tr>
+{% endfor %}
+
+</table>
+
+</body>
+</html>

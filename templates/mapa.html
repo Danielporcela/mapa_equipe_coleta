@@ -1,0 +1,80 @@
+<!DOCTYPE html>
+<html lang="pt-br">
+<head>
+    <meta charset="UTF-8">
+    <title>Mapa do Setor</title>
+
+    <style>
+        body {
+            margin: 0;
+            padding: 20px;
+            font-family: Arial, sans-serif;
+            text-align: center;
+            background-color: #f4f4f4;
+        }
+
+        h2 {
+            margin-bottom: 15px;
+        }
+
+        .mapa-box {
+            background: #fff;
+            padding: 10px;
+            border-radius: 8px;
+            box-shadow: 0 0 10px rgba(0,0,0,0.2);
+            display: inline-block;
+        }
+
+        img {
+            max-width: 100%;
+            height: auto;
+            border-radius: 6px;
+        }
+
+        .btn-voltar {
+            margin-top: 15px;
+            padding: 8px 16px;
+            background-color: #343a40;
+            color: white;
+            border: none;
+            border-radius: 5px;
+            cursor: pointer;
+        }
+
+        .btn-voltar:hover {
+            background-color: #23272b;
+        }
+    </style>
+</head>
+
+<body>
+
+    <h2>🗺️ Mapa do Setor</h2>
+
+    <div class="mapa-box">
+        <img src="{{ url_for('static', filename='mapas/' + arquivo) }}" alt="Mapa do setor">
+    </div>
+
+    <br>
+
+    <!-- 🔥 BOTÃO VOLTAR CORRIGIDO -->
+    <button class="btn-voltar" onclick="voltarPagina()">
+        ⬅ Voltar
+    </button>
+
+    <!-- 🔥 SCRIPT CORRIGIDO -->
+    <script>
+        function voltarPagina() {
+            // Se tem histórico, volta
+            if (window.history.length > 1) {
+                window.history.back();
+            }
+            // Se abriu direto (nova aba), vai para equipes
+            else {
+                window.location.href = "/equipes";
+            }
+        }
+    </script>
+
+</body>
+</html>

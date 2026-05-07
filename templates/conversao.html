@@ -1,0 +1,18 @@
+<!DOCTYPE html>
+<html>
+<body>
+<h2>Conversão</h2>
+
+<table border="1">
+<tr><th>Original</th><th>Convertido</th></tr>
+{% for d in dados %}
+<tr>
+<td>{{d.Setor_ID}}</td>
+<td>{{d.Convertido}}</td>
+</tr>
+{% endfor %}
+</table>
+
+<a href="/">Voltar</a>
+</body>
+</html>

@@ -1,0 +1,250 @@
+from flask import Flask, render_template, request, redirect, url_for, flash, jsonify
+import sqlite3
+
+app = Flask(__name__)
+app.secret_key = "123"
+
+# ================= BANCO =================
+def conectar():
+    conn = sqlite3.connect("frota.db")
+    conn.row_factory = sqlite3.Row
+    return conn
+
+def normalizar(texto):
+    if not texto:
+        return ""
+    return (
+        texto.strip()
+        .upper()
+        .replace("Á","A")
+        .replace("À","A")
+        .replace("Ã","A")
+        .replace("É","E")
+        .replace("Í","I")
+        .replace("Ó","O")
+        .replace("Ú","U")
+        .replace("Ç","C")
+    )
+
+def criar_tabelas():
+    conn = conectar()
+    cursor = conn.cursor()
+
+    cursor.execute("""
+    CREATE TABLE IF NOT EXISTS equipes (
+        id INTEGER PRIMARY KEY AUTOINCREMENT,
+        Setor_ID TEXT,
+        Frota TEXT,
+        Motorista TEXT,
+        C1 TEXT,
+        C2 TEXT,
+        C3 TEXT,
+        Hora_Saida TEXT
+    )
+    """)
+
+    cursor.execute("""
+    CREATE TABLE IF NOT EXISTS disponiveis (
+        id INTEGER PRIMARY KEY AUTOINCREMENT,
+        codigo TEXT UNIQUE,
+        tipo TEXT,
+        status TEXT
+    )
+    """)
+
+    cursor.execute("""
+    CREATE TABLE IF NOT EXISTS historico (
+        id INTEGER PRIMARY KEY AUTOINCREMENT,
+        codigo TEXT,
+        acao TEXT,
+        status TEXT,
+        data TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+    )
+    """)
+
+    conn.commit()
+    conn.close()
+
+criar_tabelas()
+
+# ================= VALIDAÇÃO GLOBAL =================
+def verificar_conflito(cursor, motorista, c1, c2, c3, ignorar_id=None):
+    codigos = [motorista, c1, c2, c3]
+    codigos = [c for c in codigos if c]
+
+    if not codigos:
+        return None
+
+    placeholders = ",".join(["?"] * len(codigos))
+
+    query = f"""
+    SELECT * FROM equipes
+    WHERE (
+        Motorista IN ({placeholders}) OR
+        C1 IN ({placeholders}) OR
+        C2 IN ({placeholders}) OR
+        C3 IN ({placeholders})
+    )
+    """
+
+    params = codigos * 4
+
+    if ignorar_id:
+        query += " AND id != ?"
+        params.append(ignorar_id)
+
+    return cursor.execute(query, params).fetchone()
+
+def validar_repeticao_interna(motorista, c1, c2, c3):
+    todos = [motorista, c1, c2, c3]
+    todos = [c for c in todos if c]
+    return len(todos) != len(set(todos))
+
+# ================= ROTAS =================
+@app.route("/")
+def index():
+    return render_template("index.html")
+
+@app.route("/equipes")
+def equipes():
+    conn = conectar()
+    dados = conn.execute("SELECT * FROM equipes ORDER BY Setor_ID").fetchall()
+    conn.close()
+    return render_template("equipes.html", dados=dados)
+
+@app.route("/disponiveis")
+def disponiveis():
+    conn = conectar()
+    dados = conn.execute("SELECT * FROM disponiveis ORDER BY tipo, status, codigo").fetchall()
+    conn.close()
+    return render_template("disponiveis.html", dados=dados)
+
+# ================= CADASTRAR =================
+@app.route("/add", methods=["POST"])
+def add():
+    try:
+        setor = normalizar(request.form.get("setor_id"))
+        frota = normalizar(request.form.get("frota"))
+        motorista = normalizar(request.form.get("motorista"))
+        c1 = normalizar(request.form.get("c1"))
+        c2 = normalizar(request.form.get("c2"))
+        c3 = normalizar(request.form.get("c3"))
+        hora = request.form.get("hora_saida") or ""
+
+        # 🔒 VALIDAÇÃO PADRÃO
+        if motorista and not motorista.startswith("M"):
+            flash("Motorista deve começar com M")
+            return redirect(url_for("equipes"))
+
+        for c in [c1, c2, c3]:
+            if c and not c.startswith("C"):
+                flash("Coletor deve começar com C")
+                return redirect(url_for("equipes"))
+
+        # 🔒 NÃO REPETIR NA MESMA EQUIPE
+        if validar_repeticao_interna(motorista, c1, c2, c3):
+            flash("Não pode repetir o mesmo código na equipe!")
+            return redirect(url_for("equipes"))
+
+        conn = conectar()
+        cursor = conn.cursor()
+
+        # 🔒 BLOQUEIO GLOBAL
+        conflito = verificar_conflito(cursor, motorista, c1, c2, c3)
+        if conflito:
+            flash("Um dos códigos já está em uso em outra equipe!")
+            conn.close()
+            return redirect(url_for("equipes"))
+
+        # INSERT
+        cursor.execute("""
+            INSERT INTO equipes (
+                Setor_ID, Frota, Motorista, C1, C2, C3, Hora_Saida
+            ) VALUES (?, ?, ?, ?, ?, ?, ?)
+        """, (setor, frota, motorista, c1, c2, c3, hora))
+
+        conn.commit()
+        conn.close()
+
+    except Exception as e:
+        print("ERRO ADD:", e)
+        flash("Erro ao cadastrar equipe")
+
+    return redirect(url_for("equipes"))
+
+# ================= SALVAR =================
+@app.route("/salvar", methods=["POST"])
+def salvar():
+    try:
+        id = request.form.get("id")
+
+        if not id:
+            return redirect(url_for("equipes"))
+
+        setor = normalizar(request.form.get("setor_id"))
+        frota = normalizar(request.form.get("frota"))
+        motorista = normalizar(request.form.get("motorista"))
+        c1 = normalizar(request.form.get("c1"))
+        c2 = normalizar(request.form.get("c2"))
+        c3 = normalizar(request.form.get("c3"))
+        hora = request.form.get("hora_saida") or ""
+
+        # 🔒 VALIDAÇÃO PADRÃO
+        if motorista and not motorista.startswith("M"):
+            flash("Motorista deve começar com M")
+            return redirect(url_for("equipes"))
+
+        for c in [c1, c2, c3]:
+            if c and not c.startswith("C"):
+                flash("Coletor deve começar com C")
+                return redirect(url_for("equipes"))
+
+        # 🔒 NÃO REPETIR NA MESMA EQUIPE
+        if validar_repeticao_interna(motorista, c1, c2, c3):
+            flash("Não pode repetir o mesmo código na equipe!")
+            return redirect(url_for("equipes"))
+
+        conn = conectar()
+        cursor = conn.cursor()
+
+        # 🔒 BLOQUEIO GLOBAL
+        conflito = verificar_conflito(cursor, motorista, c1, c2, c3, ignorar_id=id)
+        if conflito:
+            flash("Um dos códigos já está em uso em outra equipe!")
+            conn.close()
+            return redirect(url_for("equipes"))
+
+        # UPDATE
+        cursor.execute("""
+            UPDATE equipes SET
+                Setor_ID=?,
+                Frota=?,
+                Motorista=?,
+                C1=?,
+                C2=?,
+                C3=?,
+                Hora_Saida=?
+            WHERE id=?
+        """, (setor, frota, motorista, c1, c2, c3, hora, id))
+
+        conn.commit()
+        conn.close()
+
+    except Exception as e:
+        print("ERRO SALVAR:", e)
+        flash("Erro ao salvar")
+
+    return redirect(url_for("equipes"))
+
+# ================= EXCLUIR =================
+@app.route("/excluir/<int:id>", methods=["POST"])
+def excluir(id):
+    conn = conectar()
+    conn.execute("DELETE FROM equipes WHERE id=?", (id,))
+    conn.commit()
+    conn.close()
+    return redirect(url_for("equipes"))
+
+# ================= START =================
+if __name__ == "__main__":
+    app.run(debug=True)

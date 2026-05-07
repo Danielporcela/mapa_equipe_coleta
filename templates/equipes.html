@@ -1,0 +1,194 @@
+<!DOCTYPE html>
+<html lang="pt-br">
+<head>
+<meta charset="UTF-8">
+<title>Equipes</title>
+
+<style>
+body {
+    font-family: Arial;
+    background: #f4f6f9;
+    margin: 40;
+    padding: 0px;
+}
+
+.container {
+    max-width: 1200px;
+    margin-left: 20px;
+}
+
+.container {
+    max-width: 1600px;
+    margin-left: 20px;
+}
+
+.form-row {
+    margin-top: 40px;
+}
+
+input {
+    padding: 8px;
+    border-radius: 6px;
+    border: 1px solid #ccc;
+}
+
+button {
+    padding: 8px 12px;
+    border: none;
+    border-radius: 6px;
+    cursor: pointer;
+    color: white;
+}
+
+select {
+    padding: 8px;
+    border-radius: 6px;
+    border: 1px solid #ccc;
+}
+
+.btn-mapa { background:#17a2b8; }
+.btn-add { background: #007bff; }
+.btn-save { background: #28a745; }
+.btn-delete { background: #dc3545; }
+.btn-voltar { background: #6c757d; }
+.btn-print { background: #343a40; }
+
+table {
+    width: 100%;
+    border-collapse: collapse;
+}
+
+th, td {
+    padding: 8px;
+    border-bottom: 1px solid #ddd;
+    text-align: center;
+}
+</style>
+</head>
+
+<body>
+
+<div class="container">
+
+<!-- TOPO -->
+<div class="card">
+
+    <button class="btn-voltar" onclick="window.location.href='/'">⬅ Voltar</button>
+
+    <form method="POST" action="/localizar" style="display:inline; margin-left:10px;">
+        <input type="text" name="codigo" placeholder="Ex: M123 ou C900">
+        <button type="submit" style="background:#28a745;">🔍 Localizar</button>
+    </form>
+
+
+
+    <button onclick="window.print()" class="btn-print">🖨️ Imprimir</button>
+<form method="POST" action="/converter_todos" style="display:inline; margin-left:10px;">
+    <select name="modo">
+        <option value="">Converter todos</option>
+        <option value="PD">Converter tudo para PD</option>
+        <option value="ID">Converter tudo para ID</option>
+    </select>
+
+    <button type="submit" style="background:#ff9800;">
+        🔄 Converter TODOS
+    </button>
+</form>
+</div>
+
+<!-- ALERTAS -->
+{% with messages = get_flashed_messages() %}
+{% if messages %}
+<div style="background:#ffc107;text-align:center;padding:10px;">
+    {% for msg in messages %}
+        <div>{{ msg }}</div>
+    {% endfor %}
+</div>
+{% endif %}
+{% endwith %}
+
+<!-- CADASTRO -->
+<form method="POST" action="/add">
+<div class="form-row">
+    <input name="setor_id" placeholder="Setor">
+    <input name="frota" placeholder="Frota">
+    <input name="motorista" placeholder="Motorista">
+    <input name="c1" placeholder="C1">
+    <input name="c2" placeholder="C2">
+    <input name="c3" placeholder="C3">
+    <input type="time" name="hora_saida">
+    <button class="btn-add">Cadastrar</button>
+</div>
+</form>
+
+<!-- TABELA -->
+<table>
+<thead>
+<tr>
+    <th>Setor</th>
+    <th>Frota</th>
+    <th>Motorista</th>
+    <th>C1</th>
+    <th>C2</th>
+    <th>C3</th>
+    <th>Hora</th>
+    <th>Ações</th>
+</tr>
+</thead>
+
+<tbody>
+{% for e in dados %}
+
+<form method="POST" action="/salvar">
+<tr>
+    <td><input name="setor_id" value="{{ e.Setor_ID }}"></td>
+    <td><input name="frota" value="{{ e.Frota }}"></td>
+    <td><input name="motorista" value="{{ e.Motorista }}"></td>
+    <td><input name="c1" value="{{ e.C1 }}"></td>
+    <td><input name="c2" value="{{ e.C2 }}"></td>
+    <td><input name="c3" value="{{ e.C3 }}"></td>
+    <td><input name="hora_saida" value="{{ e.Hora_Saida }}"></td>
+
+    <input type="hidden" name="id" value="{{ e.id }}">
+
+    <td>
+        <button type="submit" class="btn-save">Salvar</button>
+
+        <a href="/mapa/{{ e.Setor_ID }}" onclick="salvarScroll()">
+            <button type="button" class="btn-mapa">🗺️</button>
+        </a>
+
+        <button type="submit" formaction="/excluir/{{ e.id }}" class="btn-delete">
+            Excluir
+        </button>
+    </td>
+</tr>
+</form>
+
+{% endfor %}
+</tbody>
+
+</table>
+
+</div>
+<script>
+    function salvarScroll() {
+        localStorage.setItem("scrollPos", window.scrollY);
+    }
+
+    document.querySelectorAll("button[type='submit']").forEach(btn => {
+        btn.addEventListener("click", salvarScroll);
+    });
+
+    window.addEventListener("pageshow", () => {
+        const pos = localStorage.getItem("scrollPos");
+        if (pos !== null) {
+            setTimeout(() => {
+                window.scrollTo(0, parseInt(pos));
+                localStorage.removeItem("scrollPos");
+            }, 50);
+        }
+    });
+</script>
+</body>
+</html>

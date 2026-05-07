@@ -1,0 +1,310 @@
+<!DOCTYPE html>
+<html lang="pt-br">
+<head>
+<meta charset="UTF-8">
+<title>Disponíveis</title>
+
+<style>
+/* (SEU CSS ORIGINAL — NÃO ALTERADO) */
+body {
+    font-family: Arial;
+    background: #f4f6f9;
+    margin: 0;
+    padding: 20px;
+}
+
+.container { max-width: 1200px; margin: auto; }
+
+.card {
+    background: white;
+    padding: 15px;
+    border-radius: 10px;
+    box-shadow: 0 2px 8px rgba(0,0,0,0.1);
+    margin-bottom: 20px;
+}
+
+.form-row { display: flex; gap: 10px; flex-wrap: wrap; }
+
+input, select {
+    padding: 10px;
+    border-radius: 6px;
+    border: 1px solid #ccc;
+}
+
+button {
+    padding: 10px 15px;
+    border: none;
+    border-radius: 6px;
+    cursor: pointer;
+    color: white;
+}
+
+.btn-motorista { background: #007bff; }
+.btn-coletor { background: #28a745; }
+.btn-print { background: #343a40; }
+.btn-voltar { background: #6c757d; }
+
+.grid {
+    display: grid;
+    grid-template-columns: repeat(6, 1fr);
+    gap: 10px;
+}
+
+.coluna {
+    background: #fff;
+    border-radius: 10px;
+    padding: 10px;
+    min-height: 200px;
+    box-shadow: 0 2px 6px rgba(0,0,0,0.1);
+    transition: background 0.2s;
+}
+
+.coluna h4 { text-align: center; }
+
+.item {
+    padding: 8px;
+    margin: 5px 0;
+    border-radius: 6px;
+    font-weight: bold;
+    text-align: center;
+    cursor: grab;
+    transition: all 0.25s ease;
+}
+
+.coluna.drag-over { background: #e9f5ff; }
+
+.item.dragging {
+    opacity: 0.5;
+    transform: scale(1.05);
+}
+
+/* cores */
+.disponivel { background: #d4edda; }
+.reserva { background: #cce5ff; }
+.falta { background: #f8d7da; }
+.inss { background: #fff3cd; }
+.sumido { background: #e2e3e5; }
+.preso { background: #f5c6cb; }
+
+/* 🔥 ADICIONADO */
+.ferias { background: #ffeeba; }
+
+.section-title { margin: 20px 0 10px; }
+
+@media print {
+    body { background: white; }
+    .no-print { display: none; }
+    .coluna { box-shadow: none; border: 1px solid #000; }
+}
+</style>
+</head>
+
+<body>
+
+<div class="container">
+
+<div class="card no-print">
+<button class="btn-voltar" onclick="voltar()">⬅ Voltar</button>
+<button class="btn-print" onclick="imprimir()">🖨️ Imprimir</button>
+</div>
+
+<!-- ALERTA -->
+{% with messages = get_flashed_messages() %}
+  {% if messages %}
+    <div class="card no-print" style="background:#ffc107; text-align:center; font-weight:bold;">
+        {% for msg in messages %}
+            <div>{{ msg }}</div>
+        {% endfor %}
+    </div>
+  {% endif %}
+{% endwith %}
+
+<div class="card no-print">
+<form method="POST" action="/cadastrar_status">
+<input type="hidden" name="tipo" id="tipo">
+
+<div class="form-row">
+<input type="text" name="codigo" placeholder="Código" required>
+
+<select name="status">
+<option value="Reserva">Reserva</option>
+<option value="Falta">Falta</option>
+<option value="INSS">INSS</option>
+<option value="Sumido">Sumido</option>
+<option value="Preso">Preso</option>
+
+<!-- 🔥 ADICIONADO -->
+<option value="Ferias">Férias</option>
+</select>
+
+<button type="submit" class="btn-motorista" onclick="setTipo('Motorista')">Motorista</button>
+<button type="submit" class="btn-coletor" onclick="setTipo('Coletor')">Coletor</button>
+</div>
+</form>
+</div>
+
+<h3 class="section-title">Coletores</h3>
+<div class="grid">
+{% for status in ['Reserva','Falta','INSS','Sumido','Preso','Ferias'] %}
+<div class="coluna" data-status="{{ status }}">
+<h4>{{ status }}</h4>
+
+{% for item in dados %}
+{% if item.tipo == 'COLETOR' and item.status|upper|replace('Á','A') == status|upper|replace('Á','A') %}
+<div class="item {{ status|lower }}"
+     draggable="true"
+     data-codigo="{{ item.codigo }}"
+     data-tipo="{{ item.tipo }}"
+     ondblclick="excluirItem(this)">
+{{ item.codigo }}
+</div>
+{% endif %}
+{% endfor %}
+
+</div>
+{% endfor %}
+</div>
+
+<h3 class="section-title">Motoristas</h3>
+<div class="grid">
+{% for status in ['Reserva','Falta','INSS','Sumido','Preso','Ferias'] %}
+<div class="coluna" data-status="{{ status }}">
+<h4>{{ status }}</h4>
+
+{% for item in dados %}
+{% if item.tipo == 'MOTORISTA' and item.status|upper|replace('Á','A') == status|upper|replace('Á','A') %}
+<div class="item {{ status|lower }}"
+     draggable="true"
+     data-codigo="{{ item.codigo }}"
+     data-tipo="{{ item.tipo }}"
+     ondblclick="excluirItem(this)">
+{{ item.codigo }}
+</div>
+{% endif %}
+{% endfor %}
+
+</div>
+{% endfor %}
+</div>
+
+</div>
+
+<div id="lixeira" style="position:fixed; bottom:20px; right:20px; background:#dc3545; color:white; padding:15px; border-radius:10px;">
+🗑️
+</div>
+
+<!-- 🔒 TODO JS ORIGINAL PRESERVADO ABAIXO (NÃO ALTERADO) -->
+<script>
+function setTipo(tipo){
+    document.getElementById("tipo").value = tipo.toUpperCase();
+}
+function imprimir(){ window.print(); }
+function voltar(){ window.location.href = "/"; }
+</script>
+
+<script>
+let itemArrastado = null;
+
+document.querySelectorAll(".item").forEach(el => {
+    el.addEventListener("dragstart", function(){
+        itemArrastado = this;
+        this.classList.add("dragging");
+    });
+
+    el.addEventListener("dragend", function(){
+        this.classList.remove("dragging");
+    });
+});
+
+document.querySelectorAll(".coluna").forEach(col => {
+
+    col.addEventListener("dragover", e => {
+        e.preventDefault();
+        col.classList.add("drag-over");
+    });
+
+    col.addEventListener("dragleave", () => {
+        col.classList.remove("drag-over");
+    });
+
+    col.addEventListener("drop", function(e){
+        e.preventDefault();
+        col.classList.remove("drag-over");
+
+        if (!itemArrastado) return;
+
+        const novoStatus = this.getAttribute("data-status");
+        const codigo = itemArrastado.getAttribute("data-codigo");
+        const tipoItem = itemArrastado.getAttribute("data-tipo");
+
+        const grid = this.closest(".grid");
+        const titulo = grid.previousElementSibling.innerText;
+        const areaMotorista = titulo.includes("Motoristas");
+
+        if (tipoItem === "MOTORISTA" && !areaMotorista){
+            alert("❌ Motorista não pode ir para área de Coletor");
+            return;
+        }
+
+        if (tipoItem === "COLETOR" && areaMotorista){
+            alert("❌ Coletor não pode ir para área de Motorista");
+            return;
+        }
+
+        this.appendChild(itemArrastado);
+
+        fetch("/atualizar_status", {
+            method: "POST",
+            headers: {"Content-Type": "application/json"},
+            body: JSON.stringify({
+                codigo: codigo,
+                status: novoStatus
+            })
+        });
+
+        itemArrastado = null;
+    });
+
+});
+
+const lixeira = document.getElementById("lixeira");
+
+lixeira.addEventListener("dragover", e => e.preventDefault());
+
+lixeira.addEventListener("drop", function(e){
+    e.preventDefault();
+
+    if (!itemArrastado) return;
+
+    const codigo = itemArrastado.getAttribute("data-codigo");
+
+    if (confirm("Deseja excluir este item?")){
+        itemArrastado.remove();
+
+        fetch("/excluir_disponivel", {
+            method: "POST",
+            headers: {"Content-Type": "application/json"},
+            body: JSON.stringify({ codigo: codigo })
+        });
+    }
+
+    itemArrastado = null;
+});
+
+function excluirItem(el){
+    const codigo = el.getAttribute("data-codigo");
+
+    if (confirm("Deseja excluir este item?")){
+        el.remove();
+
+        fetch("/excluir_disponivel", {
+            method: "POST",
+            headers: {"Content-Type": "application/json"},
+            body: JSON.stringify({ codigo: codigo })
+        });
+    }
+}
+</script>
+
+</body>
+</html>
