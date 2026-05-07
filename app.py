@@ -5,8 +5,8 @@ import os  # 🔥 ADICIONADO
 
 app = Flask(__name__)
 app.secret_key = "123"
-USUARIO = "admin"
-SENHA = "123456"
+USUARIO = "SUPERVISOR "
+SENHA = "LUCIANO"
 # ================= BANCO =================
 def conectar():
     conn = sqlite3.connect("frota.db")
@@ -117,6 +117,11 @@ def login():
 @app.route("/")
 def index():
     return render_template("index.html")
+
+@app.route("/logout")
+def logout():
+    session.clear()
+    return redirect(url_for("login"))
 
 @app.route("/equipes")
 def equipes():
