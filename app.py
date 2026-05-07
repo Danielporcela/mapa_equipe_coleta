@@ -1,11 +1,12 @@
-from flask import Flask, render_template, request, redirect, url_for, flash, jsonify
+from flask import Flask, render_template, request, redirect, url_for, flash, jsonify, session
 import sqlite3
 import re
 import os  # 🔥 ADICIONADO
 
 app = Flask(__name__)
 app.secret_key = "123"
-
+USUARIO = "admin"
+SENHA = "123456"
 # ================= BANCO =================
 def conectar():
     conn = sqlite3.connect("frota.db")
@@ -95,7 +96,23 @@ def criar_tabelas():
     conn.close()
 
 criar_tabelas()
+# ================= LOGIN =================
 
+@app.route("/login", methods=["GET", "POST"])
+def login():
+
+    if request.method == "POST":
+
+        usuario = request.form.get("usuario")
+        senha = request.form.get("senha")
+
+        if usuario == USUARIO and senha == SENHA:
+            session["logado"] = True
+            return redirect(url_for("index"))
+
+        flash("Usuário ou senha inválidos")
+
+    return render_template("login.html")
 # ================= ROTAS =================
 @app.route("/")
 def index():
