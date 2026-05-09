@@ -843,12 +843,35 @@ def health():
     return "ONLINE"
 
 
+# ================= ABRIR CHROME =================
+def abrir_navegador():
+
+    try:
+
+        chrome_path = (
+            "C:/Program Files/Google/Chrome/Application/chrome.exe %s"
+        )
+
+        webbrowser.get(chrome_path).open(
+            "http://127.0.0.1:5000"
+        )
+
+    except Exception as e:
+
+        print("ERRO CHROME:", e)
+
+
 # ================= START =================
 if __name__ == "__main__":
 
     port = int(
         os.environ.get("PORT", 5000)
     )
+
+    # ABRIR SOMENTE LOCAL
+    if os.environ.get("RENDER") is None:
+
+        Timer(1, abrir_navegador).start()
 
     app.run(
         host="0.0.0.0",
