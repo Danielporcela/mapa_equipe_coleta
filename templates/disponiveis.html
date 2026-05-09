@@ -95,7 +95,7 @@ button {
 
     @page {
         size: A4 landscape;
-        margin: 4mm;
+        margin: 6mm;
     }
 
     html,
@@ -104,8 +104,9 @@ button {
         height: 100%;
         margin: 0;
         padding: 0;
-        zoom: 58%;
+        zoom: 70%;
         background: white !important;
+        font-family: Arial, sans-serif;
     }
 
     .no-print,
@@ -134,32 +135,36 @@ button {
     .grid{
         display: grid !important;
         grid-template-columns: repeat(6, 1fr) !important;
-        gap: 4px !important;
+        gap: 8px !important;
     }
 
     .coluna{
         min-height: auto !important;
-        padding: 3px !important;
-        border: 1px solid #ccc !important;
+        padding: 6px !important;
+        border: 1px solid #999 !important;
         box-shadow: none !important;
         break-inside: avoid;
+        background: white !important;
     }
 
     .coluna h4{
-        font-size: 11px !important;
-        margin: 2px 0 !important;
+        font-size: 18px !important;
+        margin: 4px 0 !important;
+        text-align: center;
     }
 
     .item{
-        font-size: 9px !important;
-        padding: 2px !important;
-        margin: 2px 0 !important;
-        border-radius: 3px !important;
+        font-size: 14px !important;
+        padding: 6px !important;
+        margin: 4px 0 !important;
+        border-radius: 4px !important;
+        font-weight: bold;
+        color: black !important;
     }
 
     .section-title{
-        font-size: 13px !important;
-        margin: 5px 0 !important;
+        font-size: 22px !important;
+        margin: 10px 0 !important;
     }
 }
 </style>
@@ -203,8 +208,16 @@ button {
 <option value="Ferias">Férias</option>
 </select>
 
-<button type="submit" class="btn-motorista" onclick="setTipo('Motorista')">Motorista</button>
-<button type="submit" class="btn-coletor" onclick="setTipo('Coletor')">Coletor</button>
+<button type="submit"
+        class="btn-motorista"
+        onclick="return setTipo('Motorista')">
+    Motorista
+</button>
+<button type="submit"
+        class="btn-coletor"
+        onclick="return setTipo('Coletor')">
+    Coletor
+</button>
 </div>
 </form>
 </div>
@@ -260,12 +273,49 @@ button {
 </div>
 
 <!-- 🔒 TODO JS ORIGINAL PRESERVADO ABAIXO (NÃO ALTERADO) -->
+
+
 <script>
-function setTipo(tipo){
+    function setTipo(tipo){
+
+    const codigoInput = document.querySelector("input[name='codigo']");
+    const codigo = codigoInput.value.trim().toUpperCase();
+
+    // 🔥 salva tipo
     document.getElementById("tipo").value = tipo.toUpperCase();
+
+    // 🔥 valida motorista
+    if (tipo.toUpperCase() === "MOTORISTA") {
+
+        if (!codigo.startsWith("M")) {
+            alert("❌ Para Motorista o código deve começar com M");
+
+            event.preventDefault();
+            return false;
+        }
+    }
+
+    // 🔥 valida coletor
+    if (tipo.toUpperCase() === "COLETOR") {
+
+        if (!codigo.startsWith("C")) {
+            alert("❌ Para Coletor o código deve começar com C");
+
+            event.preventDefault();
+            return false;
+        }
+    }
+
+    return true;
 }
-function imprimir(){ window.print(); }
-function voltar(){ window.location.href = "/"; }
+
+function imprimir(){
+    window.print();
+}
+
+function voltar(){
+    window.location.href = "/";
+}
 </script>
 
 <script>
