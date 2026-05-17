@@ -8,8 +8,8 @@ app = Flask(__name__)
 app.secret_key = "123"
 
 # ================= LOGIN =================
-USUARIO = "SUPERVISOR"
-SENHA = "LUCIANO"
+USUARIO = "supervisor"
+SENHA = "luciano"
 
 
 # ================= BANCO =================
